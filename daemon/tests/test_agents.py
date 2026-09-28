@@ -82,6 +82,9 @@ def test_describe_tool_names_the_file_or_command():
     assert describe_tool("Grep", {"pattern": "TODO"}) == "Search TODO"
     assert describe_tool("Bash", {"command": "cd /x/y && P=$(ls /dev/cu.*) ; pio run"}) == "Run ls"
     assert describe_tool("Bash", {"command": "cd /x && ./screenshot.sh out.png"}) == "Run screenshot.sh"
+    assert describe_tool("Bash", {"command": "for i in 1 2; do ./screenshot.sh a$i.png; sleep 2; done"}) == "Run screenshot.sh"
+    assert describe_tool("Bash", {"command": "while true; do pio run; done"}) == "Run pio"
+    assert describe_tool("Bash", {"command": "if [ -f x ]; then make; fi"}) == "Run make"
     assert describe_tool("mcp__github__create_pr", {}) == "create pr"
 
 

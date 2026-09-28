@@ -492,6 +492,11 @@ def _short(text: str, n: int) -> str:
     return text if len(text) <= n else text[: n - 2].rstrip() + ".."
 
 
+SHELL_PREFIX_WORDS = {"do", "then", "else", "elif", "{", "(", "!", "time"}
+SHELL_SKIP_WORDS = {"cd", "for", "while", "until", "if", "case", "select",
+                    "done", "fi", "esac", "}", ")"}
+
+
 def describe_tool(name: str, inp: dict) -> str:
     """One short phrase for a tool call, e.g. "Edit ui.cpp", "Run pio"."""
     inp = inp if isinstance(inp, dict) else {}
@@ -512,7 +517,11 @@ def describe_tool(name: str, inp: dict) -> str:
                 w = w.lstrip("$(`")
                 if w and w != "sudo":
                     words.append(w)
-            if words and words[0] != "cd":
+            # Shell control flow: `for x in …` / `while cond` headers aren't
+            # programs, and `do`/`then` prefix the body's first command.
+            while words and words[0] in SHELL_PREFIX_WORDS:
+                words.pop(0)
+            if words and words[0] not in SHELL_SKIP_WORDS:
                 return f"Run {Path(words[0]).name}"
         return "Run command"
     if name in ("Grep", "Glob"):
