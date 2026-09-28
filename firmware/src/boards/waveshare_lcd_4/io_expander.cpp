@@ -162,6 +162,14 @@ void io_expander_set_brightness(uint8_t level) {
     if (output_latch != before) iox_commit_output();
 }
 
+bool io_expander_set_buzzer(bool on) {
+    if (!expander_addr) return false;
+    uint8_t bit = 1u << (is_ch32 ? CH32_PIN_BUZZER : TCA_PIN_BUZZER);
+    if (on) output_latch |= bit;
+    else    output_latch &= ~bit;
+    return iox_commit_output();
+}
+
 void io_expander_set_backlight(bool on) {
     io_expander_set_brightness(on ? 255 : 0);
 }

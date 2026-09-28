@@ -81,14 +81,17 @@ static int pct_from_mv(int mv) {
 //   - start from the last on-battery percentage (saved to flash, since this
 //     board resets when USB is plugged in),
 //   - raise it only from constant-current readings, less the 70 mV rise,
-//   - call it full after CV_FULL_MS in the constant-voltage phase.
+//   - in the constant-voltage phase the cell is past ~90%: start there and
+//     step 1% per CV_STEP_MS up to 100 (the charger's taper).
+// Progress is saved as it rises, so the board's resets don't restart it.
 // The number is conservative while charging and right once unplugged.
 #define CHARGE_RISE_MV     70
 #define CV_START_MV        4150
-#define CV_FULL_MS         (45UL * 60UL * 1000UL)
+#define CV_FLOOR_PCT       90
+#define CV_STEP_MS         (2UL * 60UL * 1000UL)
 
-static int      saved_pct   = -1;     // last on-battery %, persisted
-static uint32_t cv_since_ms = 0;      // 0 = not in the constant-voltage phase
+static int      saved_pct   = -1;     // last known %, persisted
+static uint32_t cv_step_ms  = 0;      // 0 = not in the constant-voltage phase
 
 static void save_pct(int pct) {
     if (pct == saved_pct) return;
@@ -103,14 +106,15 @@ static void save_pct(int pct) {
 static int charging_pct(int mv, uint32_t now) {
     int pct = saved_pct;
     if (mv < CV_START_MV) {
-        cv_since_ms = 0;
+        cv_step_ms = 0;
         int est = pct_from_mv(mv - CHARGE_RISE_MV);
         if (est > pct) pct = est;
     } else {
-        if (cv_since_ms == 0) cv_since_ms = now ? now : 1;
-        if (now - cv_since_ms >= CV_FULL_MS) pct = 100;
-        if (pct < 0) pct = pct_from_mv(mv - CHARGE_RISE_MV);   // nothing saved yet
+        if (pct < CV_FLOOR_PCT) pct = CV_FLOOR_PCT;
+        if (cv_step_ms == 0) cv_step_ms = now ? now : 1;
+        else if (now - cv_step_ms >= CV_STEP_MS && pct < 100) { pct++; cv_step_ms = now; }
     }
+    save_pct(pct);
     return pct;
 }
 
@@ -163,7 +167,7 @@ static void sample(void) {
     // New power source: re-settle (on battery the voltage relaxes over ~30 s;
     // the only-down rule then walks the number down to it).
     if (changed && battery_present()) {
-        cv_since_ms = 0;
+        cv_step_ms = 0;
         cached_pct = shown_pct = lcd4_on_battery() ? pct_from_mv(cached_mv)
                                                    : charging_pct(cached_mv, now);
     }
@@ -216,7 +220,7 @@ bool power_hal_is_charging(void) {
     if (chg_stat >= 0) return chg_stat == 1;   // on USB: the charger knows charging vs full
     // On USB: charging until full. Voltage alone can't say (the constant-voltage
     // phase sits near 4.2 V while still charging), so "full" is the same call the
-    // percentage makes — 100% after CV_FULL_MS in that phase.
+    // percentage makes — 100% once the CV-phase ramp tops out.
     return cached_pct < 100;
 }
 bool power_hal_pwr_pressed(void) { return false; }

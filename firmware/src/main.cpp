@@ -196,6 +196,12 @@ static void check_serial_cmd() {
 // reset line). Called exactly once at the start of setup().
 extern "C" void board_init(void);
 
+// Boards without their own beep patterns: waiting (2+) plays the reset chime,
+// done stays silent.
+__attribute__((weak)) void sound_hal_play_beeps(int count) {
+    if (count >= 2) sound_hal_play_reset();
+}
+
 void setup() {
     Serial.begin(115200);
     delay(300);
@@ -397,15 +403,14 @@ void loop() {
             if (usage_rate_group() != g_before && splash_is_active())
                 splash_pick_for_current_rate();
             // An agent just finished or started waiting on the user → wake the
-            // panel. Waiting also chimes (same opt-in as the reset chime; no-op
-            // without a speaker) — finishing happens after every reply, so it
-            // stays visual-only.
+            // panel and beep (same opt-in as the reset chime; no-op without a
+            // speaker): one beep for done, two for waiting.
             agents_nudge_t nudge = ui_update_agents(&agents);
             if (nudge != AGENTS_NUDGE_NONE) {
                 Serial.println(nudge == AGENTS_NUDGE_WAITING ? "agent waiting — nudge"
                                                              : "agent done — nudge");
                 idle_note_activity();
-                if (nudge == AGENTS_NUDGE_WAITING && usage.chime) sound_hal_play_reset();
+                if (usage.chime) sound_hal_play_beeps(nudge == AGENTS_NUDGE_WAITING ? 2 : 1);
             }
             ble_send_ack();
             continue;
