@@ -12,6 +12,23 @@ Shift+Tab over BLE HID for Claude Code's voice mode and mode-toggle shortcuts.
 
 <img width="1179" height="994" alt="Usage meter" src="https://github.com/user-attachments/assets/83e54aea-0932-428f-94aa-b3ede3a360aa" />
 
+## This fork: Waveshare LCD-4 edition
+
+<img src="assets/readme/lcd4-desk.jpg" width="600" alt="Clawdmeter on a Waveshare ESP32-S3-Touch-LCD-4 in an orange Clawd-shaped stand">
+
+This fork adds the following on top of upstream, built and tested on the [Waveshare ESP32-S3-Touch-LCD-4](https://www.waveshare.com/esp32-s3-touch-lcd-4.htm) (V4.0, CH32V003 expander):
+
+- **Running agents view** — the usage screen alternates every 8 s with an **Agents** page listing your live Claude Code sessions (up to 4): name, state (working / waiting / done / idle), minutes in that state, and the last tool call (e.g. `Edit ui.cpp · 3m`).
+- **Waiting nudge** — when a session starts waiting on a permission prompt or input, the device jumps to the Agents page (even from the splash), wakes the screen, outlines the row in amber and chimes (if chime is on). Finished sessions show a green **Done** pill for 60 s.
+- **Agent-aware splash** — the splash and corner mascot get busier with the number of agents working, not only with the usage rate.
+- **Battery status** — percentage next to the battery icon, smoothed so it doesn't jump around; a charging bolt while plugged in, level bars on battery. The screen dims to 60% on battery.
+- **LCD-4 hardware fixes** — correct CH32V003 expander driver (backlight PWM, battery ADC, buzzer held low, I2C bus recovery so a reflash can't latch the buzzer on), and a fixed-rotation option (`LCD_ROTATION` in `board.h`).
+- **Daemon (macOS)** — reads agents from `~/.claude/sessions/`, backs off on API rate limits (429) and heartbeats the last payload so the screen doesn't fall back to "No data". Disable agents with `agents = off` in `~/.config/claude-usage-monitor/config`.
+
+Flash it with `./flash-mac.sh waveshare_lcd_4`, then install the daemon as below.
+
+> **Known hardware quirk (LCD-4 V4.0):** plugging or unplugging USB with a battery fitted briefly drops power and resets the board. Press PWR after unplugging to run on battery. A 1000–2200 µF bulk capacitor across the I2C header's VCC/GND is being tested as a fix.
+
 ## Screens
 
 The device boots into the splash. Tap the screen anywhere to switch to the Usage view; tap again to flip back to the splash.
@@ -233,6 +250,14 @@ JSON payload format (written to RX):
 ```
 
 Fields: `s` = session %, `sr` = session reset (minutes), `w` = weekly %, `wr` = weekly reset (minutes), `st` = status, `ok` = success flag.
+
+Running agents are sent as a separate write (macOS daemon only):
+
+```json
+{ "ag": [["clawdmeter", "w", 2, "Allow Bash"], ["api", "b", 5, "Edit ui.cpp"]], "n": 2 }
+```
+
+Each row is `[name, state, minutes, activity]`, with state `b` = busy, `w` = waiting, `d` = done, `i` = idle; `n` = total sessions. The daemon sizes each write to the link's max write length.
 
 ## Development
 
