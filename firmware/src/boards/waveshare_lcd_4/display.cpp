@@ -69,7 +69,7 @@ void display_hal_begin(void) {
 // ST7701 has no panel brightness command; the backlight is the expander's
 // PWM (CH32 boards) or an on/off pin (TCA boards). On battery the requested
 // level is scaled down to save power.
-#define ON_BATTERY_BRIGHTNESS_PCT 60
+#define ON_BATTERY_BRIGHTNESS_PCT 35   // 60 was too subtle to notice
 
 static uint8_t requested_level = 255;
 
