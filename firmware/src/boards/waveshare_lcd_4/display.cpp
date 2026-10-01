@@ -70,8 +70,8 @@ void display_hal_begin(void) {
 // PWM (CH32 boards) or an on/off pin (TCA boards). On battery the requested
 // level is scaled down to save power; on USB it's trimmed a little too (full
 // brightness felt too bright on a desk).
-#define ON_USB_BRIGHTNESS_PCT     80
-#define ON_BATTERY_BRIGHTNESS_PCT 50
+#define ON_USB_BRIGHTNESS_PCT     70
+#define ON_BATTERY_BRIGHTNESS_PCT 40
 
 static uint8_t requested_level = 255;
 
