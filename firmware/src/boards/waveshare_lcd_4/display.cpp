@@ -68,15 +68,17 @@ void display_hal_begin(void) {
 
 // ST7701 has no panel brightness command; the backlight is the expander's
 // PWM (CH32 boards) or an on/off pin (TCA boards). On battery the requested
-// level is scaled down to save power.
-#define ON_BATTERY_BRIGHTNESS_PCT 35   // 60 was too subtle to notice
+// level is scaled down to save power; on USB it's trimmed a little too (full
+// brightness felt too bright on a desk).
+#define ON_USB_BRIGHTNESS_PCT     80
+#define ON_BATTERY_BRIGHTNESS_PCT 50
 
 static uint8_t requested_level = 255;
 
 void display_hal_set_brightness(uint8_t level) {
     requested_level = level;
-    uint8_t out = level;
-    if (lcd4_on_battery()) out = (uint8_t)((level * ON_BATTERY_BRIGHTNESS_PCT + 50) / 100);
+    int pct = lcd4_on_battery() ? ON_BATTERY_BRIGHTNESS_PCT : ON_USB_BRIGHTNESS_PCT;
+    uint8_t out = (uint8_t)((level * pct + 50) / 100);
     if (level > 0 && out == 0) out = 1;   // a dimmed non-zero level stays on
     io_expander_set_brightness(out);
 }

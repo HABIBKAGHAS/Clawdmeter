@@ -21,7 +21,7 @@ This fork adds the following on top of upstream, built and tested on the [Wavesh
 - **Running agents view** — the usage screen alternates every 8 s with an **Agents** page listing your live Claude Code sessions (up to 4): name, state (working / waiting / done / idle), minutes in that state, and the last tool call (e.g. `Edit ui.cpp · 3m`).
 - **Waiting nudge** — when a session starts waiting on a permission prompt or input, the device jumps to the Agents page (even from the splash), wakes the screen, outlines the row in amber and chimes (if chime is on). Finished sessions show a green **Done** pill for 60 s.
 - **Agent-aware splash** — the splash and corner mascot get busier with the number of agents working, not only with the usage rate.
-- **Battery status** — percentage next to the battery icon, smoothed so it doesn't jump around; a charging bolt while plugged in, level bars on battery. The screen dims to 35% brightness on battery.
+- **Battery status** — percentage next to the battery icon, smoothed so it doesn't jump around; a charging bolt while plugged in, level bars on battery. Brightness is 80% on USB and 50% on battery.
 - **LCD-4 hardware fixes** — correct CH32V003 expander driver (backlight PWM, battery ADC, buzzer held low, I2C bus recovery so a reflash can't latch the buzzer on), and a fixed-rotation option (`LCD_ROTATION` in `board.h`).
 - **Daemon (macOS)** — reads agents from `~/.claude/sessions/`, backs off on API rate limits (429) and heartbeats the last payload so the screen doesn't fall back to "No data". Disable agents with `agents = off` in `~/.config/claude-usage-monitor/config`.
 
