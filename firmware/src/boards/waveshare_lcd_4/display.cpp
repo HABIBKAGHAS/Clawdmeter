@@ -1,3 +1,4 @@
+#include <math.h>
 #include "../../hal/display_hal.h"
 #include "board.h"
 #include "io_expander.h"
@@ -77,8 +78,10 @@ static uint8_t requested_level = 255;
 
 void display_hal_set_brightness(uint8_t level) {
     requested_level = level;
+    // The percentages are perceived brightness: the eye responds roughly to
+    // duty^(1/2.2), so a linear 70% duty only looks ~10% dimmer. Gamma-correct.
     int pct = lcd4_on_battery() ? ON_BATTERY_BRIGHTNESS_PCT : ON_USB_BRIGHTNESS_PCT;
-    uint8_t out = (uint8_t)((level * pct + 50) / 100);
+    uint8_t out = (uint8_t)(level * powf(pct / 100.0f, 2.2f) + 0.5f);
     if (level > 0 && out == 0) out = 1;   // a dimmed non-zero level stays on
     io_expander_set_brightness(out);
 }
