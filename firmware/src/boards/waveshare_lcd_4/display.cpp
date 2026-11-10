@@ -72,7 +72,7 @@ void display_hal_begin(void) {
 // level is scaled down to save power; on USB it's trimmed a little too (full
 // brightness felt too bright on a desk).
 #define ON_USB_BRIGHTNESS_PCT     70
-#define ON_BATTERY_BRIGHTNESS_PCT 40
+#define ON_BATTERY_BRIGHTNESS_PCT 50
 
 static uint8_t requested_level = 255;
 
